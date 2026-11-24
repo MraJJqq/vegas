@@ -24,6 +24,11 @@ jobs:
           python-version: "3.12"
       - name: Install dependencies
         run: pip install requests
+      - name: Validate scanner and symbol list
+        run: |
+          python -m py_compile scan.py
+          count=$(grep -Ev '^[[:space:]]*(#|$)' symbols.txt | sort -u | wc -l)
+          test "$count" -eq 22
       - name: Scan all symbols
         run: python scan.py
       - name: Commit complete signals and candle cache
