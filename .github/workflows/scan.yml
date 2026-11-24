@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: vegas-scan
+  group: vegas-cache
   cancel-in-progress: false
 
 jobs:
