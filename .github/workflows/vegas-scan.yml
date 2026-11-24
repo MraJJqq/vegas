@@ -131,8 +131,8 @@ jobs:
             --header "X-GitHub-Api-Version: 2022-11-28" \
             https://api.github.com/repos/MraJJqq/bark/dispatches \
             --data "$payload")
-          status="\${response##*$'\\n'}"
-          body="\${response%$'\\n'*}"
+          status="${response##*$'\\n'}"
+          body="${response%$'\\n'*}"
           case "$status" in
             2??) echo "Bark wake event accepted (HTTP $status)" ;;
             *) echo "Bark wake event failed (HTTP $status): $body"; exit 1 ;;
