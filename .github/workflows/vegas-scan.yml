@@ -2,7 +2,7 @@ name: vegas-scan
 
 on:
   schedule:
-    # 北京时间 08:05 / 10:05 / 16:05 / 20:05 / 22:05
+    # Beijing time 08:05 / 10:05 / 16:05 / 20:05 / 22:05
     - cron: "5 0,2,8,12,14 * * *"
   workflow_dispatch:
 
@@ -29,6 +29,68 @@ jobs:
           python -m py_compile scan.py
           count=$(grep -Ev '^[[:space:]]*(#|$)' symbols.txt | sort -u | wc -l)
           test "$count" -eq 22
+      - name: Download and import full-history SQLite cache
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 --retry-delay 2 \
+            https://github.com/MraJJqq/vegas/releases/download/market-cache/market-cache.sqlite.gz \
+            --output /tmp/market-cache.sqlite.gz
+          gzip -t /tmp/market-cache.sqlite.gz
+          gunzip -c /tmp/market-cache.sqlite.gz > /tmp/market-cache.sqlite
+          python - <<'PY'
+          import csv
+          import os
+          import sqlite3
+          import time
+
+          db = sqlite3.connect("file:/tmp/market-cache.sqlite?mode=ro", uri=True)
+          integrity = db.execute("PRAGMA integrity_check").fetchone()[0]
+          if integrity != "ok":
+              raise SystemExit(f"SQLite integrity check failed: {integrity}")
+
+          tables = {row[0] for row in db.execute(
+              "SELECT name FROM sqlite_master WHERE type='table'"
+          )}
+          if "candles" not in tables:
+              raise SystemExit("SQLite cache has no candles table")
+
+          symbols = [
+              line.strip() for line in open("symbols.txt", encoding="utf-8")
+              if line.strip() and not line.lstrip().startswith("#")
+          ]
+          steps = {"1H": 3_600_000, "4H": 14_400_000}
+          now = int(time.time() * 1000)
+          os.makedirs("data", exist_ok=True)
+          total = 0
+
+          for symbol in symbols:
+              for interval, step in steps.items():
+                  rows = db.execute(
+                      """SELECT ts,open,high,low,close
+                         FROM candles
+                         WHERE contract=? AND interval=?
+                         ORDER BY ts""",
+                      (symbol, interval)
+                  ).fetchall()
+                  closed = [row for row in rows if int(row[0]) + step <= now]
+                  if not closed:
+                      raise SystemExit(
+                          f"Cache missing closed history: {symbol} {interval}"
+                      )
+                  path = f"data/{symbol}_{interval}.csv"
+                  with open(path, "w", newline="", encoding="utf-8") as handle:
+                      writer = csv.writer(handle)
+                      writer.writerow(["t", "o", "h", "l", "c"])
+                      writer.writerows(closed)
+                  print(
+                      f"IMPORTED {symbol} {interval}: "
+                      f"{len(closed)} candles ({closed[0][0]}..{closed[-1][0]})"
+                  )
+                  total += len(closed)
+
+          db.close()
+          print(f"CACHE_IMPORT_OK symbols={len(symbols)} pairs={len(symbols)*2} candles={total}")
+          PY
       - name: Scan all symbols
         run: python scan.py
       - name: Commit complete signals and candle cache
