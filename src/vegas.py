@@ -126,19 +126,22 @@ def update_incremental(con: sqlite3.Connection, contract: str, interval: str) ->
     start = int(last) + INTERVAL_MS[interval]
     end = now_ms()
     inserted = 0
+    step = INTERVAL_MS[interval]
+    # Keep each request to at most 100 candle slots, so a long outage cannot
+    # silently leave a gap when the API page limit is reached.
     while start < end:
-        page_end = min(end, start + 90 * 24 * 60 * 60 * 1000)
+        page_end = min(end, start + 99 * step)
         page = fetch_page(contract, interval, start, page_end)
         if not page:
             break
         inserted += save_candles(con, contract, interval, page)
         newest = max(int(x[0]) for x in page)
-        if newest < start or newest >= page_end or len(page) < 100:
+        if newest < start:
             break
-        next_start = newest + INTERVAL_MS[interval]
+        next_start = newest + step
         if next_start <= start:
             break
-        start = next_start
+        start = next_start if len(page) == 100 else page_end + step
     return inserted
 
 def load_candles(con: sqlite3.Connection, contract: str, interval: str) -> list[tuple]:
