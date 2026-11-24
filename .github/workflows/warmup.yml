@@ -19,6 +19,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Validate scanner code and rules
+        run: |
+          python -m py_compile src/vegas.py
+          python -m unittest discover -s tests -v
       - name: Validate and download full Bitget history
         run: python src/vegas.py warmup
       - name: Compress persistent SQLite cache
