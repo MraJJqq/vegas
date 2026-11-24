@@ -72,12 +72,29 @@ jobs:
                          ORDER BY ts""",
                       (symbol, interval)
                   ).fetchall()
-                  closed = [row for row in rows if int(row[0]) + step <= now]
-                  if not closed:
-                      raise SystemExit(
-                          f"Cache missing closed history: {symbol} {interval}"
-                      )
                   path = f"data/{symbol}_{interval}.csv"
+                  merged = {
+                      int(row[0]): tuple(row)
+                      for row in rows if int(row[0]) + step <= now
+                  }
+                  # Preserve candles fetched after the release snapshot and
+                  # previously committed incremental cache rows.
+                  if os.path.exists(path):
+                      with open(path, newline="", encoding="utf-8") as handle:
+                          for row in csv.DictReader(handle):
+                              ts = int(row["t"])
+                              if ts + step <= now:
+                                  merged[ts] = (
+                                      ts, float(row["o"]), float(row["h"]),
+                                      float(row["l"]), float(row["c"])
+                                  )
+                  closed = [merged[ts] for ts in sorted(merged)]
+                  minimum = 676 if interval == "4H" else 60
+                  if len(closed) < minimum:
+                      raise SystemExit(
+                          f"Cache history insufficient: {symbol} {interval} "
+                          f"{len(closed)}/{minimum}"
+                      )
                   with open(path, "w", newline="", encoding="utf-8") as handle:
                       writer = csv.writer(handle)
                       writer.writerow(["t", "o", "h", "l", "c"])
