@@ -119,8 +119,8 @@ jobs:
       - name: Wake Bark after scan completion (event only; no notification sent here)
         if: always()
         env:
-          TOKEN: \${{ secrets.BARK_REPO_TOKEN }}
-          SCAN_JOB_STATUS: \${{ job.status }}
+          TOKEN: ${{ secrets.BARK_REPO_TOKEN }}
+          SCAN_JOB_STATUS: ${{ job.status }}
         run: |
           test -n "$TOKEN" || { echo "BARK_REPO_TOKEN is missing"; exit 1; }
           payload=$(python -c 'import json,os; print(json.dumps({"event_type":"vegas-signals","client_payload":{"scanner_job_status":os.environ["SCAN_JOB_STATUS"]}}))')
