@@ -1,51 +1,21 @@
 {
-  "generated_at": "2026-11-24 19:06:41 (UTC+8)",
+  "generated_at": "2026-11-25 06:19:55 (UTC+8)",
   "timezone": "Asia/Shanghai",
-  "signal_date": "2026-11-24",
+  "signal_date": "2026-11-25",
   "scanned": 22,
   "succeeded": 22,
   "signals": [
     {
-      "id": "MSFTUSDT-1795446000000",
+      "id": "AMZNUSDT-1795532400000",
+      "symbol": "AMZNUSDT",
+      "time": "11-25 00:00",
+      "ts": 1795536000000
+    },
+    {
+      "id": "MSFTUSDT-1795546800000",
       "symbol": "MSFTUSDT",
-      "time": "11-24 00:00",
-      "ts": 1795449600000
-    },
-    {
-      "id": "AMZNUSDT-1795460400000",
-      "symbol": "AMZNUSDT",
-      "time": "11-24 04:00",
-      "ts": 1795464000000
-    },
-    {
-      "id": "SPCXUSDT-1795460400000",
-      "symbol": "SPCXUSDT",
-      "time": "11-24 04:00",
-      "ts": 1795464000000
-    },
-    {
-      "id": "AMZNUSDT-1795507200000",
-      "symbol": "AMZNUSDT",
-      "time": "11-24 17:00",
-      "ts": 1795510800000
-    },
-    {
-      "id": "NVDAUSDT-1795507200000",
-      "symbol": "NVDAUSDT",
-      "time": "11-24 17:00",
-      "ts": 1795510800000
-    },
-    {
-      "id": "ORCLUSDT-1795507200000",
-      "symbol": "ORCLUSDT",
-      "time": "11-24 17:00",
-      "ts": 1795510800000
-    },
-    {
-      "id": "TSMUSDT-1795507200000",
-      "symbol": "TSMUSDT",
-      "time": "11-24 17:00",
-      "ts": 1795510800000
+      "time": "11-25 04:00",
+      "ts": 1795550400000
     }
   ],
   "errors": []
