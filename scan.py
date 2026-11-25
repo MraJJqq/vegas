@@ -3,10 +3,10 @@
 
 规则：
 - 中锋 = 4H EMA144/169；红峰 = 4H EMA576/676。
-- 4H K线触碰隧道 -> 进入观察期；触碰前1根4H收盘在隧道下方=反弹(空)，上方=回踩(多)。
-- 之后（不含触碰那根1H）任一根1H收盘在1H EMA12过滤线一侧 -> 信号，本轮结束。
-- 观察期内再次触碰 -> 以最新一次为准，重新判断方向。
-- 出信号后，需有一根4H收盘没碰到隧道，才开始新一轮。
+- 4H K线首次触碰隧道 -> 进入观察期；触碰前1根4H收盘位置确定内部过滤方向。
+- 观察期内再次触碰不重置观察时间或过滤方向。
+- 之后（不含首次触碰时刻）任一根1H收盘满足1H EMA12过滤条件 -> 信号，本轮结束。
+- 观察期结束后，必须等4H价格离开隧道，才允许下一轮。
 - 同一根1H同时来自中锋/红峰 -> 只算一个信号。
 """
 import json
@@ -181,14 +181,14 @@ def scan_symbol(symbol, now_ms, get=sync):
             touched = candle4["l"] <= upper and candle4["h"] >= lower
             hourly = groups[index]
 
-            if touched and state != "DONE":
+            if touched and state == "IDLE":
                 previous_lower, previous_upper = zone[index - 1]
                 previous_close = b4[index - 1]["c"]
                 if previous_close < previous_lower:
                     side = -1
                 elif previous_close > previous_upper:
                     side = 1
-                elif side == 0:
+                else:
                     side = -1 if previous_close < (previous_lower + previous_upper) / 2 else 1
 
                 state = "WATCH"
