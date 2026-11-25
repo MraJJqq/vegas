@@ -5,9 +5,9 @@
 - 中锋 = 4H EMA144/169；红峰 = 4H EMA576/676。
 - 4H K线首次触碰隧道 -> 进入观察期。
 - 观察期内再次触碰不重置观察时间。
-- 观察期间4H价格离开对应隧道 -> 结束观察并重置。
+- 首次触碰后进入观察期；之后即使4H价格离开对应隧道，也继续观察，不结束、不重置。
 - 触碰之后（不含首次触碰时刻），任一根1H收盘价高于或低于1H EMA12 -> 信号，本轮结束。
-- 信号触发后，必须等4H价格离开隧道，才允许下一轮。
+- 信号触发后，必须等4H价格离开对应隧道，才允许下一轮。
 - 同一根1H同时来自中锋/红峰 -> 只算一个信号。
 """
 import json
@@ -220,8 +220,9 @@ def scan_symbol(symbol, now_ms, get=sync):
             touched = candle4["l"] <= upper and candle4["h"] >= lower
             hourly = groups[index]
 
-            # WATCH 或 DONE 阶段，只要4H价格离开对应隧道，就结束本轮并重置。
-            if state in ("WATCH", "DONE") and not touched:
+            # 观察期一旦开启，离开隧道也继续观察；只有信号触发后的 DONE
+            # 阶段，才在4H价格离开隧道后重置，允许下一轮触碰。
+            if state == "DONE" and not touched:
                 state, touch_time = "IDLE", None
 
             if touched and state == "IDLE":
