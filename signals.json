@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-11-25 13:30:02 (UTC+8)",
+  "generated_at": "2026-11-25 15:13:41 (UTC+8)",
   "timezone": "Asia/Shanghai",
   "signal_date": "2026-11-25",
   "scanned": 22,
   "succeeded": 22,
   "signals": [
     {
-      "id": "MSFTUSDT-1795546800000",
+      "id": "MSFTUSDT-1795543200000",
       "symbol": "MSFTUSDT",
-      "time": "11-25 04:00",
-      "ts": 1795550400000
+      "time": "11-25 03:00",
+      "ts": 1795546800000
     }
   ],
   "errors": []
