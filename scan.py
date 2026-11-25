@@ -122,7 +122,41 @@ def sync(symbol, gran, now_ms, recent_fn=fetch_recent, before_fn=fetch_before):
             if last_cached is not None and new_oldest <= last_cached:
                 break
 
+    # 巡检缓存内部缺口；只向交易所补取真实K线，不插值、不制造K线。
+    ordered_times = sorted(bars)
+    gaps = [
+        (left, right) for left, right in zip(ordered_times, ordered_times[1:])
+        if right - left > step
+    ]
+    for left, right in gaps:
+        cursor = right
+        attempts = 0
+        while cursor - left > step and attempts < 100:
+            attempts += 1
+            batch = before_fn(symbol, gran, cursor)
+            batch = [bar for bar in batch if left < bar["t"] < right]
+            if not batch:
+                break
+            for bar in batch:
+                bars.setdefault(bar["t"], bar)
+            next_cursor = min(bar["t"] for bar in batch)
+            if next_cursor >= cursor:
+                break
+            cursor = next_cursor
+
     result = [bars[t] for t in sorted(bars)]
+    unresolved = [
+        (left, right) for left, right in zip(
+            [bar["t"] for bar in result], [bar["t"] for bar in result][1:]
+        ) if right - left > step
+    ]
+    if unresolved:
+        left, right = unresolved[0]
+        raise RuntimeError(
+            f"{gran}: unresolved historical gap {left}->{right} "
+            f"({(right-left)//step - 1} candles missing)"
+        )
+
     # 仅缓存已收盘K线，避免把未完成K线写入历史缓存。
     save_cache(symbol, gran, [bar for bar in result if bar["t"] + step <= now_ms])
     return result
