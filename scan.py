@@ -99,9 +99,9 @@ def sync(symbol, gran, now_ms, recent_fn=fetch_recent, before_fn=fetch_before):
     last_cached = max(bars) if bars else None
     recent = recent_fn(symbol, gran)
     if not recent:
-        if not bars:
-            raise RuntimeError(f"{gran}: exchange returned no candles and cache is empty")
-        return [bars[t] for t in sorted(bars)]
+        raise RuntimeError(
+            f"{gran}: exchange returned no recent candles; refusing to scan stale cache"
+        )
 
     for bar in recent:
         bars[bar["t"]] = bar
@@ -188,6 +188,10 @@ def scan_symbol(symbol, now_ms, get=sync):
         raise RuntimeError(f"4H history insufficient for EMA676: {len(b4)}/676")
     if len(b1) < 60:
         raise RuntimeError(f"1H history insufficient for EMA12 scan: {len(b1)}/60")
+    if now_ms - (b1[-1]["t"] + HOUR) > HOUR + 15 * 60 * 1000:
+        raise RuntimeError("1H latest closed candle is stale")
+    if now_ms - (b4[-1]["t"] + H4) > H4 + 15 * 60 * 1000:
+        raise RuntimeError("4H latest closed candle is stale")
 
     closes4 = [bar["c"] for bar in b4]
     zone_list = [
