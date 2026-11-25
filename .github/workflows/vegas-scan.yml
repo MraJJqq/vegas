@@ -19,9 +19,28 @@ jobs:
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Verify latest main and record trigger
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          SCHEDULE_CRON: ${{ github.event.schedule }}
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          remote_sha=$(git rev-parse origin/main)
+          echo "EVENT_NAME=$EVENT_NAME"
+          echo "SCHEDULE_CRON=${SCHEDULE_CRON:-manual-or-dispatch}"
+          echo "GITHUB_SHA=$GITHUB_SHA"
+          echo "REMOTE_MAIN_SHA=$remote_sha"
+          if [ "$GITHUB_SHA" != "$remote_sha" ]; then
+            echo "STALE_RUN_BLOCKED: this run is not based on the current main head"
+            exit 1
+          fi
+          echo "RUN_HEAD_VALID"
       - name: Install dependencies
         run: pip install requests
       - name: Validate scanner and symbol list
@@ -114,8 +133,21 @@ jobs:
         run: |
           git config user.name "vegas-bot"
           git config user.email "vegas-bot@users.noreply.github.com"
+          set -euo pipefail
+          git fetch origin main
+          local_sha=$(git rev-parse HEAD)
+          remote_sha=$(git rev-parse origin/main)
+          if [ "$local_sha" != "$remote_sha" ]; then
+            echo "STALE_COMMIT_BLOCKED: main advanced during scan; refusing to publish this result"
+            exit 1
+          fi
           git add signals.json data
-          git diff --cached --quiet || (git commit -m "signals $(date -u +%FT%TZ)" && git push)
+          if git diff --cached --quiet; then
+            echo "No signals or cache changes to commit"
+          else
+            git commit -m "signals $(date -u +%FT%TZ)"
+            git push origin HEAD:main
+          fi
       - name: Wake Bark after scan completion (event only; no notification sent here)
         if: always()
         env:
