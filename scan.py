@@ -3,10 +3,11 @@
 
 规则：
 - 中锋 = 4H EMA144/169；红峰 = 4H EMA576/676。
-- 4H K线首次触碰隧道 -> 进入观察期；触碰前1根4H收盘位置确定内部过滤方向。
-- 观察期内再次触碰不重置观察时间或过滤方向。
-- 之后（不含首次触碰时刻）任一根1H收盘满足1H EMA12过滤条件 -> 信号，本轮结束。
-- 观察期结束后，必须等4H价格离开隧道，才允许下一轮。
+- 4H K线首次触碰隧道 -> 进入观察期。
+- 观察期内再次触碰不重置观察时间。
+- 观察期间4H价格离开对应隧道 -> 结束观察并重置。
+- 触碰之后（不含首次触碰时刻），任一根1H收盘价高于或低于1H EMA12 -> 信号，本轮结束。
+- 信号触发后，必须等4H价格离开隧道，才允许下一轮。
 - 同一根1H同时来自中锋/红峰 -> 只算一个信号。
 """
 import json
@@ -219,16 +220,11 @@ def scan_symbol(symbol, now_ms, get=sync):
             touched = candle4["l"] <= upper and candle4["h"] >= lower
             hourly = groups[index]
 
-            if touched and state == "IDLE":
-                previous_lower, previous_upper = zone[index - 1]
-                previous_close = b4[index - 1]["c"]
-                if previous_close < previous_lower:
-                    side = -1
-                elif previous_close > previous_upper:
-                    side = 1
-                else:
-                    side = -1 if previous_close < (previous_lower + previous_upper) / 2 else 1
+            # WATCH 或 DONE 阶段，只要4H价格离开对应隧道，就结束本轮并重置。
+            if state in ("WATCH", "DONE") and not touched:
+                state, touch_time = "IDLE", None
 
+            if touched and state == "IDLE":
                 state = "WATCH"
                 hit = next(
                     (bar for bar in hourly
@@ -238,18 +234,13 @@ def scan_symbol(symbol, now_ms, get=sync):
                 touch_time = hit["t"] if hit else (
                     hourly[-1]["t"] if hourly else candle4["t"] - 1
                 )
-            elif state == "DONE" and not touched:
-                state, side = "IDLE", 0
 
             if state == "WATCH":
                 for candle1 in hourly:
                     if candle1["t"] <= touch_time:
                         continue
-                    if (
-                        side < 0 and candle1["c"] < candle1["f"]
-                    ) or (
-                        side > 0 and candle1["c"] > candle1["f"]
-                    ):
+                    # 不限制方向：收盘价在EMA12上方或下方均可触发。
+                    if candle1["c"] != candle1["f"]:
                         found.add(candle1["t"])
                         state = "DONE"
                         break
