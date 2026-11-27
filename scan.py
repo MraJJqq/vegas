@@ -213,41 +213,40 @@ def scan_symbol(symbol, now_ms, get=sync):
     first = max(bisect_left(times4, b1[0]["t"]), 1)
     found = set()
     for zone in zone_list:
-        state, side, touch_time = "IDLE", 0, None
+        state = "IDLE"  # IDLE / WATCH / DONE
         for index in range(first, len(b4)):
             candle4 = b4[index]
             lower, upper = zone[index]
             touched = candle4["l"] <= upper and candle4["h"] >= lower
-            hourly = groups[index]
 
-            # 观察期一旦开启，离开隧道也继续观察；只有信号触发后的 DONE
-            # 阶段，才在4H价格离开隧道后重置，允许下一轮触碰。
-            if state == "DONE" and not touched:
-                state, touch_time = "IDLE", None
+            # 信号完成后，必须先出现一根完整的4H未触碰K线，才允许重新观察。
+            if state == "DONE":
+                if not touched:
+                    state = "IDLE"
+                continue
 
-            if touched and state == "IDLE":
+            # 每次4H触碰都以最新一次为准：重置观察期，并排除触碰所在4H内
+            # 的全部1H K线。触碰K线本身不参与信号判定。
+            if touched:
                 state = "WATCH"
-                hit = next(
-                    (bar for bar in hourly
-                     if bar["l"] <= upper and bar["h"] >= lower),
-                    None
-                )
-                touch_time = hit["t"] if hit else (
-                    hourly[-1]["t"] if hourly else candle4["t"] - 1
-                )
+                continue
 
             if state == "WATCH":
-                for candle1 in hourly:
-                    if candle1["t"] <= touch_time:
-                        continue
-                    # 不限制方向：收盘价在EMA12上方或下方均可触发。
-                    if candle1["c"] != candle1["f"]:
+                # 使用最近一根已收盘4H（index-1）的隧道位置，
+                # 与本4H区间内每根已收盘1H的EMA12及收盘价比较。
+                previous_lower, previous_upper = zone[index - 1]
+                for candle1 in groups[index]:
+                    line = candle1["f"]
+                    close = candle1["c"]
+                    if (
+                        (previous_lower > line and close < line)
+                        or (previous_upper < line and close > line)
+                    ):
                         found.add(candle1["t"])
                         state = "DONE"
                         break
 
     return sorted(found)
-
 
 def main():
     now_ms = int(time.time() * 1000)
