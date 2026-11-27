@@ -30,7 +30,7 @@ jobs:
           import os
           import sys
           import urllib.request
-          from datetime import datetime, timedelta
+          from datetime import datetime
           from zoneinfo import ZoneInfo
 
           repo = os.environ["REPO"]
@@ -62,8 +62,8 @@ jobs:
           ]
           due = max((value for value in candidates if value <= now), default=None)
           if due is None:
-              yesterday = now.date() - timedelta(days=1)
-              due = datetime(yesterday.year, yesterday.month, yesterday.day, 22, 5, tzinfo=tz)
+              print("No scan slot is due today yet; previous-day slots are never recovered.")
+              sys.exit(0)
 
           # Give the normal scheduled scan ten minutes to start and publish.
           if now < due + timedelta(minutes=10):
