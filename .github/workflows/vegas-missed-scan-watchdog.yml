@@ -70,11 +70,11 @@ jobs:
               print(f"Within grace period for {due.isoformat()}; no recovery needed.")
               sys.exit(0)
 
-          status, raw = request(
-              f"{api}/repos/{repo}/contents/signals.json?ref=main",
-              accept="application/vnd.github.raw+json",
-          )
           try:
+              status, raw = request(
+                  f"{api}/repos/{repo}/contents/signals.json?ref=main",
+                  accept="application/vnd.github.raw+json",
+              )
               result = json.loads(raw.decode("utf-8"))
               generated = datetime.strptime(
                   result["generated_at"].replace(" (UTC+8)", ""),
