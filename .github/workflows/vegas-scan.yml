@@ -5,6 +5,12 @@ on:
     # Re-registered schedule: Beijing time 08:05 / 10:05 / 16:05 / 20:05 / 22:05
     - cron: "5 0,2,8,12,14 * * *"
   workflow_dispatch:
+    inputs:
+      bark_recovery:
+        description: "This run was requested by Bark recovery"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -153,9 +159,10 @@ jobs:
         env:
           TOKEN: ${{ secrets.BARK_REPO_TOKEN }}
           SCAN_JOB_STATUS: ${{ job.status }}
+          SCANNER_RECOVERY: ${{ inputs.bark_recovery || false }}
         run: |
           test -n "$TOKEN" || { echo "BARK_REPO_TOKEN is missing"; exit 1; }
-          payload=$(python -c 'import json,os; print(json.dumps({"event_type":"vegas-signals","client_payload":{"scanner_job_status":os.environ["SCAN_JOB_STATUS"]}}))')
+          payload=$(python -c 'import json,os; print(json.dumps({"event_type":"vegas-signals","client_payload":{"scanner_job_status":os.environ["SCAN_JOB_STATUS"],"scanner_run_id":os.environ["GITHUB_RUN_ID"],"scanner_run_attempt":os.environ["GITHUB_RUN_ATTEMPT"],"scanner_recovery":os.environ.get("SCANNER_RECOVERY","false").lower()=="true"}}))')
           set -euo pipefail
           status=$(curl --silent --show-error --output /tmp/bark-dispatch-body --write-out '%{http_code}' \
             --request POST \

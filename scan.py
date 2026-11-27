@@ -288,6 +288,7 @@ def main():
         "timezone": "Asia/Shanghai",
         "signal_date": today.isoformat(),
         "scanned": len(symbols),
+        "scanned_symbols": symbols,
         "succeeded": len(symbols) - len(errors),
         "signals": signals,
         "errors": errors
