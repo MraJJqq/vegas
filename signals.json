@@ -1,9 +1,46 @@
 {
-  "generated_at": "2026-11-27 08:35:55 (UTC+8)",
+  "generated_at": "2026-11-27 16:13:17 (UTC+8)",
   "timezone": "Asia/Shanghai",
   "signal_date": "2026-11-27",
   "scanned": 22,
+  "scanned_symbols": [
+    "MSFTUSDT",
+    "GOOGLUSDT",
+    "AMZNUSDT",
+    "NVDAUSDT",
+    "OPENAIUSDT",
+    "AMDUSDT",
+    "TSMUSDT",
+    "AVGOUSDT",
+    "ORCLUSDT",
+    "ARMUSDT",
+    "MUUSDT",
+    "ASMLUSDT",
+    "SNDKUSDT",
+    "SKHYUSDT",
+    "MRVLUSDT",
+    "GLWUSDT",
+    "HOODUSDT",
+    "SPCXUSDT",
+    "BTCUSDT",
+    "HYPEUSDT",
+    "XAUUSDT",
+    "CLUSDT"
+  ],
   "succeeded": 22,
-  "signals": [],
+  "signals": [
+    {
+      "id": "MSFTUSDT-1795755600000",
+      "symbol": "MSFTUSDT",
+      "time": "11-27 14:00",
+      "ts": 1795759200000
+    },
+    {
+      "id": "CLUSDT-1795759200000",
+      "symbol": "CLUSDT",
+      "time": "11-27 15:00",
+      "ts": 1795762800000
+    }
+  ],
   "errors": []
 }
