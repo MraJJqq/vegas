@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-11-27 16:13:17 (UTC+8)",
+  "generated_at": "2026-11-28 05:06:43 (UTC+8)",
   "timezone": "Asia/Shanghai",
-  "signal_date": "2026-11-27",
+  "signal_date": "2026-11-28",
   "scanned": 22,
   "scanned_symbols": [
     "MSFTUSDT",
@@ -28,19 +28,6 @@
     "CLUSDT"
   ],
   "succeeded": 22,
-  "signals": [
-    {
-      "id": "MSFTUSDT-1795755600000",
-      "symbol": "MSFTUSDT",
-      "time": "11-27 14:00",
-      "ts": 1795759200000
-    },
-    {
-      "id": "CLUSDT-1795759200000",
-      "symbol": "CLUSDT",
-      "time": "11-27 15:00",
-      "ts": 1795762800000
-    }
-  ],
+  "signals": [],
   "errors": []
 }
